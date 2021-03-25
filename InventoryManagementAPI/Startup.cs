@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,6 +15,7 @@ using Repository;
 using ServiceLayer.Implementation;
 using ServiceLayer.Interface;
 using Swashbuckle.AspNetCore.Filters;
+using Swashbuckle.AspNetCore.SwaggerGen;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -39,6 +41,28 @@ namespace InventoryManagementAPI
             services.AddControllers();
             // JWT Token Generation from Server Side.
             services.AddMvc();
+            //services.AddApiVersioning();
+            services.AddApiVersioning(config =>
+            {
+                config.DefaultApiVersion = new ApiVersion(1, 0);
+                config.ReportApiVersions = true;
+                config.AssumeDefaultVersionWhenUnspecified = true;
+
+
+                config.ApiVersionReader = new QueryStringApiVersionReader("api-version");
+                SwaggerConfig.UseQueryStringApiVersion("api-version");
+
+                //using Custom Request Header allows URLs to stay clean
+                config.ApiVersionReader = new HeaderApiVersionReader("X-Version");
+                SwaggerConfig.UseCustomHeaderApiVersion("X-Version");
+
+
+                //For Accept header versioning
+                config.ApiVersionReader = new MediaTypeApiVersionReader("v");
+                SwaggerConfig.UseAcceptHeaderApiVersion("v");
+
+            });
+
             services.AddDbContext<ApplicationContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             services.AddTransient<IProductService, ProductService>();
@@ -53,6 +77,28 @@ namespace InventoryManagementAPI
                     Version = "v1",
                     Title = "JWT Token Authentication API",
                     Description = "ASP.NET Core 3.1 Web API"
+                });
+
+                swagger.SwaggerDoc("v2",
+                    new OpenApiInfo
+                    {
+                        Version = "v2",
+                        Title = "v2 API",
+                        Description = "v2 API Description"
+                    });
+
+
+      
+                swagger.OperationFilter<SwaggerParameterFilters>();
+                swagger.DocumentFilter<SwaggerVersionMapping>();
+
+                swagger.DocInclusionPredicate((version, desc) =>
+                {
+                    if (!desc.TryGetMethodInfo(out MethodInfo methodInfo)) return false;
+                    var versions = methodInfo.DeclaringType.GetCustomAttributes(true).OfType<ApiVersionAttribute>().SelectMany(attr => attr.Versions);
+                    var maps = methodInfo.GetCustomAttributes(true).OfType<MapToApiVersionAttribute>().SelectMany(attr => attr.Versions).ToArray();
+                    version = version.Replace("v", "");
+                    return versions.Any(v => v.ToString() == version && maps.Any(v => v.ToString() == version));
                 });
                 // To Enable authorization using Swagger (JWT)
                 swagger.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
@@ -126,9 +172,15 @@ namespace InventoryManagementAPI
             app.UseAuthentication();
             // Swagger Configuration in API
             app.UseSwagger();
-            app.UseSwaggerUI(options => options.SwaggerEndpoint("/swagger/v1/swagger.json", "My API v1"));
+            app.UseSwaggerUI(options =>
+            {
 
-            
+                options.DocumentTitle = "Test Title";
+                options.SwaggerEndpoint($"/swagger/v1/swagger.json", $"v1");
+                options.SwaggerEndpoint($"/swagger/v2/swagger.json", $"v2");
+            });
+
+
         }
     }
 }

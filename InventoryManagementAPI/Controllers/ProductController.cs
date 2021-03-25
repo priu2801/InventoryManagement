@@ -13,6 +13,8 @@ using System.Threading.Tasks;
 namespace InventoryManagementAPI.Controllers
 {
    // [Route("api/[controller]")]
+   [ApiVersion("1")]
+   [ApiVersion("2")]
     [ApiController]
     public class ProductController : ControllerBase
     {
@@ -33,8 +35,9 @@ namespace InventoryManagementAPI.Controllers
         #endregion
 
         [HttpGet]
+        [MapToApiVersion("1")]
         [SwaggerOperation(Tags = new[] { "Product Management" })]
-        [Route("~/api/Product/GetAllProducts")]
+        [Route("~/api/v{version:apiVersion}/Product/GetAllProducts")]
         [Authorize(AuthenticationSchemes = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme)]
         public async Task<IActionResult> GetAllProducts()
         {
@@ -57,8 +60,9 @@ namespace InventoryManagementAPI.Controllers
         }
 
         [HttpPost]
+        [MapToApiVersion("2")]
         [SwaggerOperation(Tags = new[] { "Product Management" })]
-        [Route("~/api/Product/AddProduct")]
+        [Route("~/api/v{version:apiVersion}/Product/AddProduct")]
         [Authorize(AuthenticationSchemes = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme)]
         public async Task<IActionResult> AddProduct([FromBody] Product model)
         {
@@ -81,8 +85,10 @@ namespace InventoryManagementAPI.Controllers
         }
 
         [HttpDelete]
+        [MapToApiVersion("1")]
+        [MapToApiVersion("2")]
         [SwaggerOperation(Tags = new[] { "Product Management" })]
-        [Route("~/api/Product/DeleteProduct")]
+        [Route("~/api/v{version:apiVersion}/Product/DeleteProduct")]
         [Authorize(AuthenticationSchemes = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme)]
         public async Task<IActionResult> DeleteProduct(int? productId)
         {
@@ -117,8 +123,10 @@ namespace InventoryManagementAPI.Controllers
 
 
         [HttpPut]
+        [MapToApiVersion("1")]
+        [MapToApiVersion("2")]
         [SwaggerOperation(Tags = new[] { "Product Management" })]
-        [Route("~/api/Product/UpdateProduct")]
+        [Route("~/api/v{version:apiVersion}/Product/UpdateProduct")]
         [Authorize(AuthenticationSchemes = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme)]
         public async Task<IActionResult> UpdateProduct([FromBody] Product model)
         {
