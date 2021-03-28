@@ -1,3 +1,5 @@
+using DataAccess;
+using InventoryManagementAPI.Filter;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -37,8 +39,12 @@ namespace InventoryManagementAPI
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
-        {
-            services.AddControllers();
+        {           
+            services.AddControllers(config =>
+            {
+                config.Filters.Add<LoggerFilter>();
+            }).SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
+
             // JWT Token Generation from Server Side.
             services.AddMvc();
             //services.AddApiVersioning();
@@ -63,11 +69,43 @@ namespace InventoryManagementAPI
 
             });
 
+
+            // JWT Token Authorization and Authentication
+            var jwtTokenConfig = Configuration.GetSection("jwtTokenConfig").Get<JwtTokenConfig>();
+            services.AddSingleton(jwtTokenConfig);
+            services.AddAuthentication(x =>
+            {
+                x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(x =>
+            {
+                x.RequireHttpsMetadata = true;
+                x.SaveToken = true;
+                x.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = jwtTokenConfig.Issuer,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtTokenConfig.Secret)),
+                    ValidAudience = jwtTokenConfig.Audience,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.FromMinutes(1)
+                };
+            });
+            services.AddSingleton<IJwtAuthManager, JwtAuthManager>();
+            services.AddHostedService<JwtRefreshTokenCache>();
+
             services.AddDbContext<ApplicationContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+           
+            //Dependency Injection of Service Classes
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+            services.AddTransient<IUserService,UserService>();
             services.AddTransient<IProductService, ProductService>();
             services.AddTransient<IProductDetailsService, ProductDetailsService>();
             services.AddTransient<ILoggerService, LoggerService>();
+
+
             // Enable Swagger 
             services.AddSwaggerGen(swagger =>
             {
@@ -100,6 +138,8 @@ namespace InventoryManagementAPI
                     version = version.Replace("v", "");
                     return versions.Any(v => v.ToString() == version && maps.Any(v => v.ToString() == version));
                 });
+               
+                
                 // To Enable authorization using Swagger (JWT)
                 swagger.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
                 {
@@ -127,24 +167,13 @@ namespace InventoryManagementAPI
                 });
             });
 
-            services.AddAuthentication(option =>
-            {
-                option.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                option.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 
-            }).AddJwtBearer(options =>
+            services.AddCors(options =>
             {
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = false,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = Configuration["Jwt:Issuer"],
-                    ValidAudience = Configuration["Jwt:Issuer"],
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Jwt:Key"])) //Configuration["JwtToken:SecretKey"]
-                };
+                options.AddPolicy("AllowAll",
+                    builder => { builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader(); });
             });
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -161,6 +190,10 @@ namespace InventoryManagementAPI
 
             app.UseRouting();
 
+            app.UseCors("AllowAll");
+
+            app.UseAuthentication();
+
             app.UseAuthorization();
 
            
@@ -169,7 +202,7 @@ namespace InventoryManagementAPI
             {
                 endpoints.MapControllers();
             });
-            app.UseAuthentication();
+           
             // Swagger Configuration in API
             app.UseSwagger();
             app.UseSwaggerUI(options =>
@@ -179,8 +212,6 @@ namespace InventoryManagementAPI
                 options.SwaggerEndpoint($"/swagger/v1/swagger.json", $"v1");
                 options.SwaggerEndpoint($"/swagger/v2/swagger.json", $"v2");
             });
-
-
         }
     }
 }

@@ -43,13 +43,20 @@ namespace InventoryManagementAPI.Controllers
         {
             try
             {
-                var product = await productService.GetProduct();
-                if (product == null)
+                if (User.Identity.IsAuthenticated)
                 {
-                    return NotFound();
-                }
+                    var product = await productService.GetProduct();
+                    if (product == null)
+                    {
+                        return NotFound();
+                    }
 
-                return Ok(product);
+                    return Ok(product);
+                }
+                else
+                {
+                    return BadRequest();
+                }
             }
             catch (Exception ex)
             {
@@ -66,21 +73,23 @@ namespace InventoryManagementAPI.Controllers
         [Authorize(AuthenticationSchemes = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme)]
         public async Task<IActionResult> AddProduct([FromBody] Product model)
         {
-            if (ModelState.IsValid)
+            if (User.Identity.IsAuthenticated)
             {
-                try
+                if (ModelState.IsValid)
                 {
-                    await productService.InsertProduct(model);
-                    return Ok();
-                }
-                catch (Exception ex)
-                {
-                    _loggerService.Error(ex);
-                    return BadRequest();
-                }
+                    try
+                    {
+                        await productService.InsertProduct(model);
+                        return Ok();
+                    }
+                    catch (Exception ex)
+                    {
+                        _loggerService.Error(ex);
+                        return BadRequest();
+                    }
 
-            }
-
+                }
+            }            
             return BadRequest();
         }
 
@@ -93,32 +102,35 @@ namespace InventoryManagementAPI.Controllers
         public async Task<IActionResult> DeleteProduct(int? productId)
         {
             int result = 0;
-
-            if (productId == null)
+            if (User.Identity.IsAuthenticated)
             {
-                return BadRequest();
-            }
-
-            try
-            {
-                result = await productService.DeleteProduct(Convert.ToInt64(productId));
-                if (result == 0)
+                if (productId == null)
                 {
-                    return NotFound();
-                }
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                if (ex.GetType().FullName ==
-                             "Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException")
-                {
-                    return NotFound();
+                    return BadRequest();
                 }
 
-                _loggerService.Error(ex);
-                return BadRequest();
+                try
+                {
+                    result = await productService.DeleteProduct(Convert.ToInt64(productId));
+                    if (result == 0)
+                    {
+                        return NotFound();
+                    }
+                    return Ok();
+                }
+                catch (Exception ex)
+                {
+                    if (ex.GetType().FullName ==
+                                 "Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException")
+                    {
+                        return NotFound();
+                    }
+
+                    _loggerService.Error(ex);
+                    return BadRequest();
+                }
             }
+            return BadRequest();
         }
 
 
@@ -130,23 +142,26 @@ namespace InventoryManagementAPI.Controllers
         [Authorize(AuthenticationSchemes = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme)]
         public async Task<IActionResult> UpdateProduct([FromBody] Product model)
         {
-            if (ModelState.IsValid)
+            if (User.Identity.IsAuthenticated)
             {
-                try
+                if (ModelState.IsValid)
                 {
-                    await productService.UpdateProduct(model);
-
-                    return Ok();
-                }
-                catch (Exception ex)
-                {
-                    if (ex.GetType().FullName ==
-                             "Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException")
+                    try
                     {
-                        return NotFound();
+                        await productService.UpdateProduct(model);
+
+                        return Ok();
                     }
-                    _loggerService.Error(ex);
-                    return BadRequest();
+                    catch (Exception ex)
+                    {
+                        if (ex.GetType().FullName ==
+                                 "Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException")
+                        {
+                            return NotFound();
+                        }
+                        _loggerService.Error(ex);
+                        return BadRequest();
+                    }
                 }
             }
 

@@ -3,13 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31025.194
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InventoryManagementAPI", "InventoryManagementAPI\InventoryManagementAPI.csproj", "{37A6D116-5928-4EF7-BFFE-957DA14D2B57}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InventoryManagementAPI", "InventoryManagementAPI\InventoryManagementAPI.csproj", "{37A6D116-5928-4EF7-BFFE-957DA14D2B57}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataAccess", "..\InventoryManagement\DataAccess\DataAccess.csproj", "{2EAAE8AD-357D-4F9A-B3BE-51F3667A2AF5}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Repository", "..\InventoryManagement\Repository\Repository.csproj", "{A7027AFC-1C6D-4EB0-9F5C-BA4EB5C8526D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ServiceLayer", "..\InventoryManagement\ServiceLayer\ServiceLayer.csproj", "{C5D947A9-5C82-40C7-B1A9-106853CAEE1A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DBFactory", "DBFactory\DBFactory.csproj", "{D92AF687-5363-4EFF-A804-6F3F11180BB9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{C5D947A9-5C82-40C7-B1A9-106853CAEE1A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C5D947A9-5C82-40C7-B1A9-106853CAEE1A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C5D947A9-5C82-40C7-B1A9-106853CAEE1A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D92AF687-5363-4EFF-A804-6F3F11180BB9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D92AF687-5363-4EFF-A804-6F3F11180BB9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D92AF687-5363-4EFF-A804-6F3F11180BB9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D92AF687-5363-4EFF-A804-6F3F11180BB9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
